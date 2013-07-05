@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STM", "STM\STM.csproj", "{6A0CB9C1-4898-45F1-9558-F45947C87F34}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "STMTest", "STMTest\STMTest.csproj", "{70932A60-13B3-466D-9389-06071F7E7866}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6A0CB9C1-4898-45F1-9558-F45947C87F34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A0CB9C1-4898-45F1-9558-F45947C87F34}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A0CB9C1-4898-45F1-9558-F45947C87F34}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A0CB9C1-4898-45F1-9558-F45947C87F34}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70932A60-13B3-466D-9389-06071F7E7866}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70932A60-13B3-466D-9389-06071F7E7866}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70932A60-13B3-466D-9389-06071F7E7866}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70932A60-13B3-466D-9389-06071F7E7866}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
