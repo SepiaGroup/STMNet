@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using STM.Exceptions;
 
 namespace STM
 {
@@ -22,7 +23,7 @@ namespace STM
 				bool waitMore;
 				do
 				{
-					waitMore = OriginalObject.mre.WaitOne(1000);
+					waitMore = OriginalObject.ResetEvent.Wait(1000);
 
 					versionId = originalObject.Element.Version;
 
@@ -34,7 +35,7 @@ namespace STM
 				}
 				else
 				{
-					throw new Exception("StmObject is not in valid state.");
+					throw new InvalidStmObjectStateException("StmObject is not in valid state.");
 				}
 			}
 		}
@@ -70,7 +71,7 @@ namespace STM
 					bool waitMore;
 					do
 					{
-						waitMore = OriginalObject.mre.WaitOne(1000);
+						waitMore = OriginalObject.ResetEvent.Wait(1000);
 
 						acquireState = GetAcquireState();
 
@@ -78,15 +79,6 @@ namespace STM
 
 					return acquireState;
 			}
-
-			//var loop = 0;
-			//acquireState = AcquireState.Busy;
-			//while (loop < 3 && acquireState == AcquireState.Busy)
-			//{
-			//	loop++;
-			//	Thread.Sleep(300);
-			//	acquireState = GetAcquireState();
-			//}
 
 			return acquireState;
 		}
@@ -97,7 +89,7 @@ namespace STM
 
 			if (OriginalObject.Element.Version == this)
 			{
-				OriginalObject.mre.Reset();
+				OriginalObject.ResetEvent.Reset();
 				return AcquireState.Acquired;
 			}
 
@@ -118,19 +110,19 @@ namespace STM
 		{
 			if (!IsAcquired)
 			{
-				throw new Exception("StmObject must be acquired before commit.");
+				throw new CommitBeforeAcquireException("StmObject must be acquired before commit.");
 			}
 
 			Interlocked.Exchange(ref OriginalObject.Element, NewObject.Element);
 
-			OriginalObject.mre.Set();
+			OriginalObject.ResetEvent.Set();
 		}
 
 		public void Release()
 		{
 			Interlocked.CompareExchange(ref OriginalObject.Element.Version, OriginalVersionId, this);
 
-			OriginalObject.mre.Set();
+			OriginalObject.ResetEvent.Set();
 		}
 	}
 }

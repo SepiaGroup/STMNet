@@ -16,49 +16,40 @@ namespace STMTest
 		private List<StmObject<int>> StmInts = new List<StmObject<int>>();
 		private const int nbrStms = 10;
 
-		private void ReadFromStm<T>(StmObject<T> stm, AutoResetEvent are)
+		private void ReadFromStm<T>(StmObject<T> stm)
 		{
 			using (Stm.BeginTransaction())
 			{
 				stm.Read();
 			}
-
-			are.Set();
 		}
 
-		private void WriteToStm<T>(StmObject<T> stm, T newValue, AutoResetEvent are)
+		private void WriteToStm<T>(StmObject<T> stm, T newValue)
 		{
 
 			using (Stm.BeginTransaction())
 			{
 				stm.Write(newValue);
 			}
-
-			are.Set();
 		}
 
-		private void DoAction(AutoResetEvent doAre)
+		private void DoAction()
 		{
-
-			var loop = 100;
+			var loop = 1000;
 
 			var random = new Random();
-			var randomStm = random.Next(nbrStms);
-
-			var are = new AutoResetEvent(false);
 
 			for (var i = 0; i < loop; i++)
 			{
-				var t = random.Next(2) == 0 ?
-							new Thread(() => ReadFromStm(StmInts[random.Next(nbrStms)], are))
-							: new Thread(() => WriteToStm(StmInts[random.Next(nbrStms)], random.Next(100), are));
-
-				t.Start();
-
-				are.WaitOne();
+				if (random.Next(2) == 0)
+				{
+					ReadFromStm(StmInts[random.Next(nbrStms)]);
+				}
+				else
+				{
+					WriteToStm(StmInts[random.Next(nbrStms)], random.Next(100));
+				}
 			}
-
-			doAre.Set();
 		}
 
 		[TestMethod]
@@ -66,27 +57,31 @@ namespace STMTest
 		{
 			const int nbrThreads = 5;
 
+			var threadPool = new List<Thread>();
+
+			for (var i = 0; i < nbrThreads; i++)
+			{
+				threadPool.Add(new Thread(() => DoAction()));
+			}
+
+
 			for (var i = 0; i < nbrStms; i++)
 			{
 				StmInts.Add(Stm.CreateObject(i));
 			}
 
 			var s = new Stopwatch();
-			var Ares = new List<AutoResetEvent>();
-
+			
 			s.Start();
 
-			
-			for (var i = 0; i < nbrThreads; i++)
+			foreach (var t in threadPool)
 			{
-				var are = new AutoResetEvent(false);
-				Ares.Add(are);
-				new Thread(() => DoAction(are)).Start();
+				t.Start();
 			}
 
-			foreach (var a in Ares)
+			foreach (var t in threadPool)
 			{
-				a.WaitOne();
+				t.Join();
 			}
 			
 			s.Stop();

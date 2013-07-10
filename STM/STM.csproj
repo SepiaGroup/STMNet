@@ -45,6 +45,8 @@
   <ItemGroup>
     <Compile Include="AcquireState.cs" />
     <Compile Include="Element.cs" />
+    <Compile Include="Exceptions\CommitBeforeAcquireException.cs" />
+    <Compile Include="Exceptions\InvalidStmObjectStateException.cs" />
     <Compile Include="ITransaction.cs" />
     <Compile Include="ITransactionLogEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

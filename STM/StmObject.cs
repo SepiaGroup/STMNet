@@ -9,7 +9,7 @@ namespace STM
 	public class StmObject<T>  //: IStmObject<T> 
 	{
 		private static int _uniqueId = Int32.MinValue;
-		internal ManualResetEvent mre = new ManualResetEvent(false);
+		internal ManualResetEventSlim ResetEvent = new ManualResetEventSlim(false);
 
 		internal static int GetUniqueId
 		{
