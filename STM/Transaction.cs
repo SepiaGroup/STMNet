@@ -15,11 +15,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using STM.Exceptions;
 
 namespace STM
 {
+	public delegate bool RetryDelegate(Transaction transaction);
 
-	public class Transaction : IDisposable //: ITransaction
+	public class Transaction : IDisposable
 	{
 		#region Data and Ctor
 
@@ -29,9 +31,20 @@ namespace STM
 
 		internal TransactionLog TransactionLog { get { return _txLog; } }
 
+		private readonly RetryDelegate _retryDelegate;
+
+		public int RetryCount { get; private set; }
+
 		internal Transaction()
 		{
 			State = TransactionState.Active;
+			_retryDelegate = null;
+		}
+
+		internal Transaction(RetryDelegate retryDelegate)
+		{
+			State = TransactionState.Active;
+			_retryDelegate = retryDelegate;
 		}
 
 		#endregion
@@ -57,7 +70,7 @@ namespace STM
 				return txEntry.NewObject.Value;
 			}
 
-			throw new Exception("Cannot read NSTM transactional object value! Value has been changed by another transaction since it was last read. (Use isolation level 'ReadCommitted' to allow such changes to happen.)");
+			throw new StmObjectValueChangedException("StmObject value has been changed by another transaction since it was last read. (Use isolation level 'ReadCommitted' to allow such changes to happen.)");
 		}
 
 		private bool IsValidVersion<T>(TransactionLogEntry<T> txEntry)
@@ -92,7 +105,7 @@ namespace STM
 				return (int)versionId == (int)txEntry.OriginalVersionId;
 			}
 
-			throw new Exception("StmObject busy could not read");
+			throw new StmObjectBusyException("StmObject busy could not read");
 		}
 
 
@@ -116,6 +129,31 @@ namespace STM
 
 		public bool Commit()
 		{
+			if (DoCommit())
+			{
+				return true;
+			}
+
+			if (_retryDelegate == null)
+			{
+				return false;
+			}
+
+			while (_retryDelegate(this))
+			{
+				if (DoCommit())
+				{
+					return true;
+				}
+
+				RetryCount++;
+			}
+
+			return false;
+		}
+
+		private bool DoCommit()
+		{
 			if (State == TransactionState.Active)
 			{
 				var acquireError = false;
@@ -126,13 +164,6 @@ namespace STM
 						acquireError = true;
 						break;
 					}
-
-					//var loop = 0;
-					//while (acquireState == AcquireState.Busy && loop < 3)
-					//{
-					//	loop++;
-					//	Thread.Sleep(300);
-					//}
 
 					if (acquireState != AcquireState.Acquired)
 					{
@@ -160,8 +191,10 @@ namespace STM
 				return true;
 			}
 
-			throw new Exception("Transaction must be 'Active' in order to commit");
+			throw new TransactionNotActiveException("Transaction must be 'Active' in order to commit");
 		}
+
+		
 
 		#region IDisposable Members
 

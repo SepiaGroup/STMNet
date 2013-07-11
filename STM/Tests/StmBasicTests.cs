@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -11,25 +12,23 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace STM.Tests
 {
 	[TestClass]
-	public class SMTBasicTests
+	public class StmBasicTests
 	{
 
 		StmObject<int> s1 = Stm.CreateObject(2);
 		private ConcurrentBag<Tuple<AcquireState, StmObject<int>>> acquireStates = new ConcurrentBag<Tuple<AcquireState, StmObject<int>>>();
-		private int commitedValue;
+		private int _commitedValue;
 
-		private void ThreadAcquire(AutoResetEvent are)
+		private void ThreadAcquire()
 		{
 			var t = Stm.BeginTransaction();
 
 			s1.Read();
 
 			acquireStates.Add(Tuple.Create( t.TransactionLog.Transactions.First().Value.Acquire(), s1));
-
-			are.Set();
 		}
 
-		private void ThreadAcquireAndCommit(AutoResetEvent are, int newValue)
+		private void ThreadAcquireAndCommit(int newValue)
 		{
 			var t = Stm.BeginTransaction();
 
@@ -41,31 +40,25 @@ namespace STM.Tests
 			if (acquireStatus == AcquireState.Acquired)
 			{
 				tle.Commit();
-				commitedValue = s1.Value;
+				_commitedValue = s1.Value;
 			}
 
 			acquireStates.Add(Tuple.Create(acquireStatus, s1));
-
-			are.Set();
 		}
 
 		[TestMethod]
 		public void ThreadWriteTestTimeout()
 		{
+			var thread1 = new Thread(ThreadAcquire);
 
-			var are1 = new AutoResetEvent(false);
-			var are2 = new AutoResetEvent(false);
-
-			var thread1 = new Thread(() => ThreadAcquire(are1));
-
-			var thread2 = new Thread(() => ThreadAcquire(are2));
+			var thread2 = new Thread(ThreadAcquire);
 
 			thread1.Start();
 			thread2.Start();
 
-			foreach (var e in new WaitHandle[] { are1, are2 })
+			foreach (var t in new List<Thread> {thread1, thread2})
 			{
-				Assert.IsTrue(e.WaitOne());
+				t.Join();
 			}
 
 
@@ -77,26 +70,21 @@ namespace STM.Tests
 		[TestMethod]
 		public void ThreadWriteTest()
 		{
+			var thread1 = new Thread(() => ThreadAcquireAndCommit(10));
 
-			var are1 = new AutoResetEvent(false);
-			var are2 = new AutoResetEvent(false);
-
-			var thread1 = new Thread(() => ThreadAcquireAndCommit(are1, 10));
-
-			var thread2 = new Thread(() => ThreadAcquireAndCommit(are2, 11));
+			var thread2 = new Thread(() => ThreadAcquireAndCommit(11));
 
 			thread1.Start();
 			thread2.Start();
 
-			foreach (var e in new WaitHandle[] { are1, are2 })
+			foreach (var t in new List<Thread> { thread1, thread2 })
 			{
-				Assert.IsTrue(e.WaitOne());
+				t.Join();
 			}
 
 			Assert.IsTrue(acquireStates.Count == 2);
-			Assert.IsTrue(acquireStates.First(f => f.Item1 == AcquireState.Acquired).Item2.Value == commitedValue);
-			Assert.IsTrue(acquireStates.First(f => f.Item1 == AcquireState.Failed).Item2.Value == commitedValue);
-
+			Assert.IsTrue(acquireStates.First(f => f.Item1 == AcquireState.Acquired).Item2.Value == _commitedValue);
+			Assert.IsTrue(acquireStates.First(f => f.Item1 == AcquireState.Failed).Item2.Value == _commitedValue);
 		}
 	}
 }

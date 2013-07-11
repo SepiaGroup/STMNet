@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Threading;
+using STM.Exceptions;
 
 namespace STM
 {
@@ -38,7 +39,7 @@ namespace STM
 			// ...if not, then we can still work with T if it´s a value type or string, because cloning them is easy
 			if (!(typeof(T).IsValueType || typeof(T) == typeof(string)))
 			{
-				throw new InvalidCastException(string.Format("Invalid type parameter! Cannot create StmObject<T> for type {0}. It is neither a value type, nor a string, nor does it implement ICloneable.", typeof(T).Name));
+				throw new InvalidStmObjectCastException(string.Format("Invalid type parameter! Cannot create StmObject<T> for type {0}. It is neither a value type, nor a string, nor does it implement ICloneable.", typeof(T).Name));
 			}
 		}
 		
