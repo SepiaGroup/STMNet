@@ -62,7 +62,7 @@ namespace STM
 				// first read on object: create txlog entry...
 				var newStmObject = stmObject.Clone();
 
-				txEntry = new TransactionLogEntry<T>(stmObject, newStmObject, TransactionType.Read);
+				txEntry = TransactionLogEntry<T>.LogReadEntry(stmObject, newStmObject);
 				_txLog.Add(txEntry);
 
 				// return new value
@@ -129,8 +129,7 @@ namespace STM
 
 			if (txEntry == null)
 			{
-				
-				txEntry = new TransactionLogEntry<T>(stmObject, newStmObject, TransactionType.Write);
+				txEntry = TransactionLogEntry<T>.LogWriteEntry(stmObject, newStmObject);
 				_txLog.Add(txEntry);
 
 				return;

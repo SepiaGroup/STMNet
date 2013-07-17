@@ -7,24 +7,17 @@ namespace STM
 {
 	internal class TransactionLogEntry<T> : ITransactionLogEntry
 	{
-		internal TransactionLogEntry(StmObject<T> originalObject, StmObject<T> newObject, TransactionType transactionType )
+		private TransactionLogEntry(StmObject<T> originalObject, StmObject<T> newObject, bool incrementVersionId)
 		{
 			OriginalObject = originalObject;
 			NewObject = newObject;
-			TransactionType = transactionType;
-
+			
 			var versionId = originalObject.Element.Version;
 			if (versionId is int)
 			{
 				OriginalVersionId = versionId;
 
-				if (transactionType == TransactionType.Read)
-				{
-					newObject.Element.Version = versionId;
-				}
-
-				newObject.Element.Version = (int)versionId + 1;
-
+				newObject.Element.Version = incrementVersionId ? (int)versionId + 1 : (int)versionId;
 			}
 			else
 			{
@@ -42,12 +35,7 @@ namespace STM
 				{
 					OriginalVersionId = versionId;
 
-					if (transactionType == TransactionType.Read)
-					{
-						newObject.Element.Version = versionId;
-					}
-
-					newObject.Element.Version = (int)versionId + 1;
+					newObject.Element.Version = incrementVersionId ? (int)versionId + 1 : (int)versionId; 
 				}
 				else
 				{
@@ -56,17 +44,25 @@ namespace STM
 			}
 		}
 
+		internal static TransactionLogEntry<T> LogReadEntry(StmObject<T> originalObject, StmObject<T> newObject)
+		{
+			return new TransactionLogEntry<T>(originalObject, newObject, false);
+		}
+
+		internal static TransactionLogEntry<T> LogWriteEntry(StmObject<T> originalObject, StmObject<T> newObject)
+		{
+			return new TransactionLogEntry<T>(originalObject, newObject, true);
+		}
+
 		internal StmObject<T> OriginalObject;
 		internal StmObject<T> NewObject;
-
-		public TransactionType TransactionType { get; private set; }
 
 		public object OriginalVersionId { get; private set; }
 
 		internal void UpdateNewStmObject(StmObject<T> newStmObject)
 		{
+			newStmObject.Element.Version = (int) OriginalVersionId + 1;
 			NewObject = newStmObject;
-			TransactionType = TransactionType.Write;
 		}
 
 		public bool IsAcquired

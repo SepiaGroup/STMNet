@@ -58,7 +58,6 @@
     <Compile Include="Tests\StmRetryTests.cs" />
     <Compile Include="Tests\StmBasicTests.cs" />
     <Compile Include="Transaction.cs" />
-    <Compile Include="TransactionType.cs" />
     <Compile Include="TransactionLog.cs" />
     <Compile Include="TransactionLogEntry.cs" />
     <Compile Include="TransactionState.cs" />
