@@ -7,15 +7,24 @@ namespace STM
 {
 	internal class TransactionLogEntry<T> : ITransactionLogEntry
 	{
-		internal TransactionLogEntry(StmObject<T> originalObject, StmObject<T> newObject)
+		internal TransactionLogEntry(StmObject<T> originalObject, StmObject<T> newObject, TransactionType transactionType )
 		{
 			OriginalObject = originalObject;
 			NewObject = newObject;
+			TransactionType = transactionType;
 
 			var versionId = originalObject.Element.Version;
 			if (versionId is int)
 			{
 				OriginalVersionId = versionId;
+
+				if (transactionType == TransactionType.Read)
+				{
+					newObject.Element.Version = versionId;
+				}
+
+				newObject.Element.Version = (int)versionId + 1;
+
 			}
 			else
 			{
@@ -32,6 +41,13 @@ namespace STM
 				if (versionId is int)
 				{
 					OriginalVersionId = versionId;
+
+					if (transactionType == TransactionType.Read)
+					{
+						newObject.Element.Version = versionId;
+					}
+
+					newObject.Element.Version = (int)versionId + 1;
 				}
 				else
 				{
@@ -43,11 +59,14 @@ namespace STM
 		internal StmObject<T> OriginalObject;
 		internal StmObject<T> NewObject;
 
+		public TransactionType TransactionType { get; private set; }
+
 		public object OriginalVersionId { get; private set; }
 
 		internal void UpdateNewStmObject(StmObject<T> newStmObject)
 		{
 			NewObject = newStmObject;
+			TransactionType = TransactionType.Write;
 		}
 
 		public bool IsAcquired

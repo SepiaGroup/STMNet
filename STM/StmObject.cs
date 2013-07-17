@@ -50,8 +50,6 @@ namespace STM
 			Element = new Element<T>(initialValue);
 		}
 
-		#region INstmObject Members
-
 		public StmObject<T> Clone()
 		{
 			if (typeof(T).IsValueType || typeof(T) == typeof(string))
@@ -66,8 +64,6 @@ namespace STM
 			// (our class ctor has checked that!)
 			return Element.Value == null ? new StmObject<T>(default(T)) : (new StmObject<T>((T)((ICloneable)Element.Value).Clone()));
 		}
-
-		#endregion
 
 		public T Read()
 		{

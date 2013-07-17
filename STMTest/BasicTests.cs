@@ -87,6 +87,66 @@ namespace STMTest
 
 			Assert.IsTrue(r.MyProp == 2);
 		}
+
+		[TestMethod]
+		public void ReadStmIntObjectCommit()
+		{
+			var s = Stm.CreateObject(1);
+
+			var t = Stm.BeginTransaction();
+
+			var r = s.Read();
+
+			t.Commit();
+
+			Assert.IsTrue(r == 1);
+		}
+
+		[TestMethod]
+		public void ReadStmClassObjectCommit()
+		{
+			var s = Stm.CreateObject(new MyTestClass { MyProp = 1 });
+
+			var t = Stm.BeginTransaction();
+
+			var r = s.Read();
+
+			t.Commit();
+
+			Assert.IsTrue(r.MyProp == 1);
+		}
+
+		[TestMethod]
+		public void WriteStmIntObjectCommit()
+		{
+			var s = Stm.CreateObject(1);
+
+			var t = Stm.BeginTransaction();
+
+			s.Write(2);
+
+			var r = s.Read();
+
+			t.Commit();
+
+			Assert.IsTrue(r == 2);
+		}
+
+		[TestMethod]
+		public void WriteStmClassObjectCommit()
+		{
+			var s = Stm.CreateObject(new MyTestClass { MyProp = 1 });
+
+			var t = Stm.BeginTransaction();
+
+			s.Write(new MyTestClass { MyProp = 2 });
+
+			var r = s.Read();
+
+			t.Commit();
+
+			Assert.IsTrue(r.MyProp == 2);
+		}
 		
 		[TestMethod]
 		public void ThreadWriteStmIntObject()

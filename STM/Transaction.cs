@@ -19,6 +19,7 @@ using STM.Exceptions;
 
 namespace STM
 {
+	public delegate void TransactionDelegate(Transaction transaction);
 	public delegate bool RetryDelegate(Transaction transaction);
 
 	public class Transaction : IDisposable
@@ -31,6 +32,7 @@ namespace STM
 
 		internal TransactionLog TransactionLog { get { return _txLog; } }
 
+		private readonly TransactionDelegate _transactionDelegate;
 		private readonly RetryDelegate _retryDelegate;
 
 		public int RetryCount { get; private set; }
@@ -38,12 +40,14 @@ namespace STM
 		internal Transaction()
 		{
 			State = TransactionState.Active;
+			_transactionDelegate = null;
 			_retryDelegate = null;
 		}
 
-		internal Transaction(RetryDelegate retryDelegate)
+		internal Transaction(TransactionDelegate transactionDelegate, RetryDelegate retryDelegate)
 		{
 			State = TransactionState.Active;
+			_transactionDelegate = transactionDelegate;
 			_retryDelegate = retryDelegate;
 		}
 
@@ -58,7 +62,7 @@ namespace STM
 				// first read on object: create txlog entry...
 				var newStmObject = stmObject.Clone();
 
-				txEntry = new TransactionLogEntry<T>(stmObject, newStmObject);
+				txEntry = new TransactionLogEntry<T>(stmObject, newStmObject, TransactionType.Read);
 				_txLog.Add(txEntry);
 
 				// return new value
@@ -93,30 +97,40 @@ namespace STM
 			//return true;
 
 			var versionId = txEntry.OriginalObject.Element.Version;
-			var loop = 0;
-			while (versionId is int == false && loop < 3)
-			{
-				Thread.Sleep(300);
-				loop++;
-			}
+			//var loop = 0;
+			//while (versionId is int == false && loop < 3)
+			//{
+			//	Thread.Sleep(300);
+			//	loop++;
+			//}
 
-			if (versionId is int)
+			bool waitMore;
+			do
 			{
-				return (int)versionId == (int)txEntry.OriginalVersionId;
-			}
+				if (versionId is int)
+				{
+					return (int)versionId == (int)txEntry.OriginalVersionId;
+				}
+
+				waitMore = txEntry.OriginalObject.ResetEvent.Wait(1000);
+				versionId = txEntry.OriginalObject.Element.Version;
+
+			} while (versionId is int == false && waitMore);
+
 
 			throw new StmObjectBusyException("StmObject busy could not read");
 		}
-
 
 		// Log write for INstmObject<T> objects
 		internal void LogWrite<T>(StmObject<T> stmObject, T newValue)
 		{
 			var newStmObject = new StmObject<T>(newValue);
 			var txEntry = _txLog.GetObject(stmObject);
+
 			if (txEntry == null)
 			{
-				txEntry = new TransactionLogEntry<T>(stmObject, newStmObject);
+				
+				txEntry = new TransactionLogEntry<T>(stmObject, newStmObject, TransactionType.Write);
 				_txLog.Add(txEntry);
 
 				return;
@@ -157,8 +171,11 @@ namespace STM
 			if (State == TransactionState.Active)
 			{
 				var acquireError = false;
-				foreach (var acquireState in _txLog.Transactions.Select(t => t.Value.Acquire()))
+				//foreach (var acquireState in _txLog.Transactions.Select(t => t.Value.Acquire()))
+				foreach (var element in _txLog.Transactions.Select(s => s.Value))
 				{
+					var acquireState = element.Acquire();
+
 					if (acquireState == AcquireState.Failed)
 					{
 						acquireError = true;
@@ -194,7 +211,7 @@ namespace STM
 			throw new TransactionNotActiveException("Transaction must be 'Active' in order to commit");
 		}
 
-		
+
 
 		#region IDisposable Members
 

@@ -87,7 +87,6 @@ namespace STMTest
 			s.Stop();
 
 			Debug.WriteLine("Time {0}millisecondds", s.ElapsedMilliseconds);
-
 		}
 	}
 }

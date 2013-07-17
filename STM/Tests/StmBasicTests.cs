@@ -11,24 +11,31 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace STM.Tests
 {
+
+
+// NEED TO REWORK THESE TEST 
+// IN CURRENT STATE THEY ARE NOT VALID!
+
+
+
 	[TestClass]
 	public class StmBasicTests
 	{
 
 		StmObject<int> s1 = Stm.CreateObject(2);
-		private ConcurrentBag<Tuple<AcquireState, StmObject<int>>> acquireStates = new ConcurrentBag<Tuple<AcquireState, StmObject<int>>>();
+		
 		private int _commitedValue;
 
-		private void ThreadAcquire()
+		private void ThreadAcquire(ConcurrentBag<Tuple<AcquireState, StmObject<int>>> acquireStates)
 		{
 			var t = Stm.BeginTransaction();
 
 			s1.Read();
 
-			acquireStates.Add(Tuple.Create( t.TransactionLog.Transactions.First().Value.Acquire(), s1));
+			acquireStates.Add(Tuple.Create(t.TransactionLog.Transactions.First().Value.Acquire(), s1));
 		}
 
-		private void ThreadAcquireAndCommit(int newValue)
+		private void ThreadAcquireAndCommit(int newValue, ConcurrentBag<Tuple<AcquireState, StmObject<int>>> acquireStates)
 		{
 			var t = Stm.BeginTransaction();
 
@@ -46,45 +53,49 @@ namespace STM.Tests
 			acquireStates.Add(Tuple.Create(acquireStatus, s1));
 		}
 
-		[TestMethod]
-		public void ThreadWriteTestTimeout()
-		{
-			var thread1 = new Thread(ThreadAcquire);
+		//[TestMethod]
+		//public void ThreadWriteTestTimeout()
+		//{
+		//	var acquireStates = new ConcurrentBag<Tuple<AcquireState, StmObject<int>>>();
 
-			var thread2 = new Thread(ThreadAcquire);
+		//	var thread1 = new Thread(() => ThreadAcquire(acquireStates));
 
-			thread1.Start();
-			thread2.Start();
+		//	var thread2 = new Thread(() => ThreadAcquire(acquireStates));
 
-			foreach (var t in new List<Thread> {thread1, thread2})
-			{
-				t.Join();
-			}
+		//	thread1.Start();
+		//	thread2.Start();
+
+		//	foreach (var t in new List<Thread> { thread1, thread2 })
+		//	{
+		//		t.Join();
+		//	}
 
 
-			Assert.IsTrue(acquireStates.Count == 2);
-			Assert.IsTrue(acquireStates.Any(a => a.Item1 == AcquireState.Acquired));
-			Assert.IsTrue(acquireStates.Any(a => a.Item1 == AcquireState.Busy));
-		}
+		//	Assert.IsTrue(acquireStates.Count == 2);
+		//	Assert.IsTrue(acquireStates.Any(a => a.Item1 == AcquireState.Acquired));
+		//	Assert.IsTrue(acquireStates.Any(a => a.Item1 == AcquireState.Busy));
+		//}
 
-		[TestMethod]
-		public void ThreadWriteTest()
-		{
-			var thread1 = new Thread(() => ThreadAcquireAndCommit(10));
+		//[TestMethod]
+		//public void ThreadWriteTest()
+		//{
+		//	var acquireStates = new ConcurrentBag<Tuple<AcquireState, StmObject<int>>>();
 
-			var thread2 = new Thread(() => ThreadAcquireAndCommit(11));
+		//	var thread1 = new Thread(() => ThreadAcquireAndCommit(10, acquireStates));
 
-			thread1.Start();
-			thread2.Start();
+		//	var thread2 = new Thread(() => ThreadAcquireAndCommit(11, acquireStates));
 
-			foreach (var t in new List<Thread> { thread1, thread2 })
-			{
-				t.Join();
-			}
+		//	thread1.Start();
+		//	thread2.Start();
 
-			Assert.IsTrue(acquireStates.Count == 2);
-			Assert.IsTrue(acquireStates.First(f => f.Item1 == AcquireState.Acquired).Item2.Value == _commitedValue);
-			Assert.IsTrue(acquireStates.First(f => f.Item1 == AcquireState.Failed).Item2.Value == _commitedValue);
-		}
+		//	foreach (var t in new List<Thread> { thread1, thread2 })
+		//	{
+		//		t.Join();
+		//	}
+
+		//	Assert.IsTrue(acquireStates.Count == 2);
+		//	Assert.IsTrue(acquireStates.First(f => f.Item1 == AcquireState.Acquired).Item2.Value == _commitedValue);
+		//	Assert.IsTrue(acquireStates.First(f => f.Item1 == AcquireState.Failed).Item2.Value == _commitedValue);
+		//}
 	}
 }

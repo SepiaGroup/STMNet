@@ -19,12 +19,14 @@ namespace STM
 
 		public static Transaction BeginTransaction()
 		{
-			return BeginTransaction(null);
+			_trasaction = new Transaction();
+
+			return _trasaction;
 		}
 
-		public static Transaction BeginTransaction(RetryDelegate retryDelegate)
+		public static Transaction ExecuteTransaction(TransactionDelegate transactionDelegate, RetryDelegate retryDelegate = null)
 		{
-			_trasaction = new Transaction(retryDelegate);
+			_trasaction = new Transaction(transactionDelegate, retryDelegate);
 
 			return _trasaction;
 		}
