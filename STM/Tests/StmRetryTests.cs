@@ -46,7 +46,7 @@ namespace STM.Tests
 		//}
 
 
-		public class MyObj : ICloneable
+		public class MyObj : IStmObject<MyObj>
 		{
 			public int Index { get; private set; }
 
@@ -55,7 +55,7 @@ namespace STM.Tests
 				Index = index;
 			}
 
-			public object Clone()
+			public MyObj Clone()
 			{
 				return new MyObj(Index);
 			}

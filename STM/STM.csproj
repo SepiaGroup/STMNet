@@ -51,6 +51,7 @@
     <Compile Include="Exceptions\StmObjectValueChangedtException.cs" />
     <Compile Include="Exceptions\InvalidStmObjectCastException.cs" />
     <Compile Include="Exceptions\InvalidStmObjectStateException.cs" />
+    <Compile Include="IStmObject.cs" />
     <Compile Include="ITransactionLogEntry.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StmObject.cs" />

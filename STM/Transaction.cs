@@ -121,7 +121,6 @@ namespace STM
 			throw new StmObjectBusyException("StmObject busy could not read");
 		}
 
-		// Log write for INstmObject<T> objects
 		internal void LogWrite<T>(StmObject<T> stmObject, T newValue)
 		{
 			var newStmObject = new StmObject<T>(newValue);
@@ -170,7 +169,7 @@ namespace STM
 			if (State == TransactionState.Active)
 			{
 				var acquireError = false;
-				//foreach (var acquireState in _txLog.Transactions.Select(t => t.Value.Acquire()))
+
 				foreach (var element in _txLog.Transactions.Select(s => s.Value))
 				{
 					var acquireState = element.Acquire();
@@ -209,9 +208,7 @@ namespace STM
 
 			throw new TransactionNotActiveException("Transaction must be 'Active' in order to commit");
 		}
-
-
-
+		
 		#region IDisposable Members
 
 		public void Dispose()

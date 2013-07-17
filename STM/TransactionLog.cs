@@ -44,18 +44,5 @@ namespace STM
 		{
 			_conflicts.Add(entry);
 		}
-
-		//#region ICloneable Members
-		//public object Clone()
-		//{
-		//	var txLogClone = new TransactionLog();
-		//	foreach (var logEntry in _entries.Values)
-		//	{
-		//		txLogClone._entries.Add(logEntry.Id, (ITransactionLogEntry)logEntry.Clone());
-		//	}
-
-		//	return txLogClone;
-		//}
-		//#endregion
 	}
 }

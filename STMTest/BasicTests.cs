@@ -17,12 +17,12 @@ namespace STMTest
 			Assert.IsTrue(s.Value == 1);
 		}
 
-		private class MyTestClass : ICloneable
+		private class MyTestClass : IStmObject<MyTestClass>
 		{
 			public int MyProp { get; set; }
 
 
-			public object Clone()
+			public MyTestClass Clone()
 			{
 				return new MyTestClass {MyProp = MyProp};
 			}

@@ -7,7 +7,7 @@ namespace STM
 {
 
 	// shared object: can be involved in many tx and can be used by many threads
-	public class StmObject<T>  //: IStmObject<T> 
+	public class StmObject<T> 
 	{
 		private static int _uniqueId = Int32.MinValue;
 		internal ManualResetEventSlim ResetEvent = new ManualResetEventSlim(false);
@@ -30,8 +30,8 @@ namespace STM
 
 		static StmObject()
 		{
-			// check if T implements ICloneable...
-			if (typeof(T).GetInterfaces().Any(interfaceType => interfaceType == typeof(ICloneable)))
+			// check if T implements IStmObject
+			if (typeof(T).GetInterfaces().Any(interfaceType => interfaceType == typeof(IStmObject<T>)))
 			{
 				return;
 			}
@@ -60,9 +60,10 @@ namespace STM
 				return new StmObject<T>(Element.Value);
 			}
 
-			// if it´s not a value type or string, then it must be cloneable
+			// if it´s not a value type or string, then it must be implement IStmObject
 			// (our class ctor has checked that!)
-			return Element.Value == null ? new StmObject<T>(default(T)) : (new StmObject<T>((T)((ICloneable)Element.Value).Clone()));
+
+			return Element.Value == null ? new StmObject<T>(default(T)) : new StmObject<T>(((IStmObject<T>)Element.Value).Clone());
 		}
 
 		public T Read()
