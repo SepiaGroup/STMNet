@@ -12,7 +12,9 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading;
 using STM.Exceptions;
@@ -29,31 +31,47 @@ namespace STM
 		public TransactionState State { get; private set; }
 
 		private readonly TransactionLog _txLog = new TransactionLog();
+		private TransactionOptions _options;
 
 		internal TransactionLog TransactionLog { get { return _txLog; } }
 
-		private readonly TransactionDelegate _transactionDelegate;
-		private readonly RetryDelegate _retryDelegate;
+		internal TransactionDelegate TransactionDelegate { get; private set; }
+		internal RetryDelegate RetryDelegate { get; private set; }
 
 		public int RetryCount { get; private set; }
 
 		internal Transaction()
 		{
-			State = TransactionState.Active;
-			_transactionDelegate = null;
-			_retryDelegate = null;
+			Initialize(null, null, new TransactionOptions());
+		}
+
+		internal Transaction(TransactionOptions options)
+		{
+			Initialize(null, null, options);
 		}
 
 		internal Transaction(TransactionDelegate transactionDelegate, RetryDelegate retryDelegate)
 		{
+			Initialize(transactionDelegate, retryDelegate, new TransactionOptions());
+		}
+
+		internal Transaction(TransactionDelegate transactionDelegate, RetryDelegate retryDelegate, TransactionOptions options)
+		{
+			Initialize(transactionDelegate, retryDelegate, options);
+		}
+
+		private void Initialize(TransactionDelegate transactionDelegate, RetryDelegate retryDelegate, TransactionOptions options)
+		{
+			_options = options;
 			State = TransactionState.Active;
-			_transactionDelegate = transactionDelegate;
-			_retryDelegate = retryDelegate;
+			TransactionDelegate = transactionDelegate;
+			RetryDelegate = retryDelegate;
 		}
 
 		#endregion
 
 		#region log access to tx values in txlog
+
 		internal T LogRead<T>(StmObject<T> stmObject)
 		{
 			var txEntry = _txLog.GetObject(stmObject);
@@ -146,12 +164,12 @@ namespace STM
 				return true;
 			}
 
-			if (_retryDelegate == null)
+			if (RetryDelegate == null)
 			{
 				return false;
 			}
 
-			while (_retryDelegate(this))
+			while (RetryDelegate(this))
 			{
 				if (DoCommit())
 				{
@@ -170,20 +188,23 @@ namespace STM
 			{
 				var acquireError = false;
 
-				foreach (var element in _txLog.Transactions.Select(s => s.Value))
+				foreach (var t in _txLog.Transactions)
 				{
-					var acquireState = element.Acquire();
-
-					if (acquireState == AcquireState.Failed)
+					if (!_options.AbortOnReadConflicts && ((TransactionLogEntry<object>)t.Value).OriginalVersionId == ((TransactionLogEntry<object>)t.Value).NewStm.Element.Version)
 					{
-						acquireError = true;
-						break;
+						continue;
 					}
+
+					AcquireState acquireState = t.Value.Acquire();
 
 					if (acquireState != AcquireState.Acquired)
 					{
 						acquireError = true;
-						break;
+
+						if (_options.AbortOnFirstConflict)
+						{
+							break;
+						}
 					}
 				}
 
@@ -208,8 +229,49 @@ namespace STM
 
 			throw new TransactionNotActiveException("Transaction must be 'Active' in order to commit");
 		}
-		
+
 		#region IDisposable Members
+
+		public bool HasReadConflicts
+		{
+			get
+			{
+				switch (State)
+				{
+					case TransactionState.Active:
+						throw new TransactionNotActiveException("Transaction cannot be 'Active' when calling HasReadConflicts");
+
+					case TransactionState.Committed:
+						return false;
+
+					case TransactionState.Aborted:
+						return _txLog.Transactions.Any(t => t.Value.ConflictType == ConflictType.Read);
+				}
+
+				throw new Exception("Unknow Transaction State in HasReadConflicts");
+			}
+		}
+
+		public bool HasWriteConflicts
+		{
+			get
+			{
+				switch (State)
+				{
+					case TransactionState.Active:
+						throw new TransactionNotActiveException("Transaction cannot be 'Active' when calling HasWriteConflicts");
+
+					case TransactionState.Committed:
+						return false;
+
+					case TransactionState.Aborted:
+						return _txLog.Transactions.Any(t => t.Value.ConflictType == ConflictType.Write);
+				}
+
+				throw new Exception("Unknow Transaction State in HasWriteConflicts");
+			}
+		}
+
 
 		public void Dispose()
 		{

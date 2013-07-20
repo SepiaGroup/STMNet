@@ -56,6 +56,20 @@ namespace STM
 
 		internal StmObject<T> OriginalObject;
 		internal StmObject<T> NewObject;
+		public bool HasConflict { get; private set; }
+		public ConflictType ConflictType
+		{
+			get
+			{
+				if (!HasConflict)
+				{
+					return ConflictType.None;
+				}
+
+				return (int) OriginalVersionId == (int) NewStm.Element.Version ? ConflictType.Read : ConflictType.Write;
+			}
+		}
+
 
 		public object OriginalVersionId { get; private set; }
 
@@ -92,8 +106,10 @@ namespace STM
 
 					} while (acquireState == AcquireState.Busy && waitMore);
 
-					return acquireState;
+					break;
 			}
+
+			HasConflict = acquireState == AcquireState.Acquired;
 
 			return acquireState;
 		}
@@ -138,6 +154,16 @@ namespace STM
 			Interlocked.CompareExchange(ref OriginalObject.Element.Version, OriginalVersionId, this);
 
 			OriginalObject.ResetEvent.Set();
+		}
+
+		public StmObject<T> OriginalStm
+		{
+			get { return OriginalObject; }
+		}
+
+		public StmObject<T> NewStm
+		{
+			get { return NewObject; }
 		}
 	}
 }

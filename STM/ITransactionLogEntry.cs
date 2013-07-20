@@ -9,5 +9,6 @@ namespace STM
 		int UniqueId { get; }
 		void Commit();
 		void Release();
+		ConflictType ConflictType { get; }
 	}
 }

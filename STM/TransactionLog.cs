@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace STM
 {
-	internal class TransactionLog //: ICloneable
+	internal class TransactionLog 
 	{
 		private readonly Dictionary<int, ITransactionLogEntry> _entries = new Dictionary<int, ITransactionLogEntry>();
-		private List<ITransactionLogEntry> _conflicts;
 
 		internal void Add(ITransactionLogEntry txEntry)
 		{
@@ -38,11 +39,6 @@ namespace STM
 		internal ReadOnlyDictionary<int, ITransactionLogEntry> Transactions
 		{
 			get { return new ReadOnlyDictionary<int, ITransactionLogEntry>(_entries); }
-		}
-
-		internal void AddConflict(ITransactionLogEntry entry)
-		{
-			_conflicts.Add(entry);
 		}
 	}
 }

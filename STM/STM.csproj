@@ -44,8 +44,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AcquireState.cs" />
+    <Compile Include="ConflictType.cs" />
     <Compile Include="Element.cs" />
     <Compile Include="Exceptions\CommitBeforeAcquireException.cs" />
+    <Compile Include="Exceptions\TransactionActiveException.cs" />
     <Compile Include="Exceptions\TransactionNotActiveException.cs" />
     <Compile Include="Exceptions\StmObjectBusyException.cs" />
     <Compile Include="Exceptions\StmObjectValueChangedtException.cs" />
@@ -61,6 +63,7 @@
     <Compile Include="Transaction.cs" />
     <Compile Include="TransactionLog.cs" />
     <Compile Include="TransactionLogEntry.cs" />
+    <Compile Include="TransactionOptions.cs" />
     <Compile Include="TransactionState.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

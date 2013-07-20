@@ -19,14 +19,44 @@ namespace STM
 
 		public static Transaction BeginTransaction()
 		{
-			_trasaction = new Transaction();
+			_trasaction = new Transaction(new TransactionOptions());
 
 			return _trasaction;
 		}
 
-		public static Transaction ExecuteTransaction(TransactionDelegate transactionDelegate, RetryDelegate retryDelegate = null)
+		public static Transaction BeginTransaction(TransactionOptions options)
+		{
+			_trasaction = new Transaction(options);
+
+			return _trasaction;
+		}
+
+		public static Transaction ExecuteTransaction(TransactionDelegate transactionDelegate)
+		{
+			return ExecuteTransaction(transactionDelegate, null, new TransactionOptions());
+		}
+
+		public static Transaction ExecuteTransaction(TransactionDelegate transactionDelegate, TransactionOptions options)
+		{
+			return ExecuteTransaction(transactionDelegate, null, options);
+		}
+
+		public static Transaction ExecuteTransaction(TransactionDelegate transactionDelegate,  RetryDelegate retryDelegate)
+		{
+			return ExecuteTransaction(transactionDelegate, retryDelegate, new TransactionOptions());
+		}
+
+		public static Transaction ExecuteTransaction(TransactionDelegate transactionDelegate, RetryDelegate retryDelegate, TransactionOptions options)
 		{
 			_trasaction = new Transaction(transactionDelegate, retryDelegate);
+
+
+			_trasaction.TransactionDelegate.Invoke(_trasaction);
+
+			while (_trasaction.State == TransactionState.Aborted && _trasaction.RetryDelegate != null && _trasaction.RetryDelegate.Invoke(_trasaction))
+			{
+				_trasaction.TransactionDelegate.Invoke(_trasaction);
+			}
 
 			return _trasaction;
 		}
