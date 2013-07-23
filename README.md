@@ -1,6 +1,5 @@
 # STMNet 
 ##### A Lightweight Software Transactional Memory API
-======
 
 STMNet is an API for multithreaded computation in which shared data is synchronized without using locks. Threads synchronize by means of memory transactions, short-lived computations that either commit (take effect) or abort (have no effect). Transactions avoid the well-known problems of locking, including deadlock, priority inversion, and fault-intolerance. The STMNet is a software transactional memory package written in C#.
 
