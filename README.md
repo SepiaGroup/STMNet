@@ -13,7 +13,7 @@ public StmObject<SomeObject> myStmObject = Stm.CreateObject(new SomeObject(initV
 // This method is called by a thread to do something...
 public void DoSomething()
 {
-	using(var trans = Stm.BeginTransaction())
+	using(Stm.BeginTransaction())
     {
     	// Read the value of myStmValue
     	var v = myStmValue.Read();
@@ -22,16 +22,6 @@ public void DoSomething()
         var newObj = new SomeObject(v);
         
         myStmObject.Write(newObj);
-    }
-    
-    if(trans.State == TransactionsState.Committed)
-    {
-		// Transactions committed 
-    }
-    
-    if(trans.State == TransactionsState.Aborted)
-    {
-    	// Transactions aborted 
     }
 }
 ````
