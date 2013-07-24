@@ -13,7 +13,7 @@ public StmObject<SomeObject> myStmObject = Stm.CreateObject(new SomeObject(initV
 // This method is called by a thread to do something...
 public void DoSomething()
 {
-	using(Stm.BeginTransaction())
+	using(var trans = Stm.BeginTransaction())
     {
     	// Read the value of myStmValue
     	var v = myStmValue.Read();
@@ -56,7 +56,17 @@ public bool RetryDelegate(Transaction transaction)
 // Method to execute the transaction
 public void ExecuteTransTest()
 {
-	var t = Stm.ExecuteTransaction(TransDelegate, RetryDelegate);
+    var trans = Stm.ExecuteTransaction(TransDelegate, RetryDelegate);
+    
+    if(trans.State == TransactionsState.Committed)
+    {
+		// Transactions committed 
+    }
+    
+    if(trans.State == TransactionsState.Aborted)
+    {
+    	// Transactions aborted 
+    }
 }
 ````
 
