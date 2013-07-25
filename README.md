@@ -23,6 +23,16 @@ public void DoSomething()
         
         myStmObject.Write(newObj);
     }
+        
+    if(Stm.Transaction.State == TransactionsState.Committed)
+    {
+	// Transactions committed 
+    }
+    
+    if(Stm.Transaction.State == TransactionsState.Aborted)
+    {
+    	// Transactions aborted 
+    }
 }
 ````
 
