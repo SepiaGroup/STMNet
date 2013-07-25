@@ -26,7 +26,7 @@ public void DoSomething()
         
     if(Stm.Transaction.State == TransactionsState.Committed)
     {
-	// Transactions committed 
+        // Transactions committed 
     }
     
     if(Stm.Transaction.State == TransactionsState.Aborted)
